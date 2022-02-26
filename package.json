@@ -10,7 +10,7 @@
     "dev": "nodemon server.js"
   },
   "keywords": [],
-  "author": "Arjun Muraleedharan",
+  "author": "Arun Pandian",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
