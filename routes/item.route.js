@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const cloudinary = require("cloudinary");
 
 // Load models and auth middleware
 const Item = require("../models/item.model");
@@ -10,33 +11,39 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
-// Set up multer
-const multer = require("multer");
-const {v4:uuidv4} = require("uuid");
-const DIR = './public/images';
-// const upload = multer({ dest: "./public/images/" }).single("image");
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECRET
+  })
 
-const Storage = multer.diskStorage({
-    destination:(req,file,cb)=>{
-        cb(null,DIR);
-    },
-    filename:(req,file,cb)=>{
-        const filename = file.originalname.toLowerCase().split(" ").join('-');
-        cb(null, uuidv4() + '-' + filename)
-    },
-})
+// // Set up multer
+// const multer = require("multer");
+// const {v4:uuidv4} = require("uuid");
+// const DIR = './public/images';
+// // const upload = multer({ dest: "./public/images/" }).single("image");
 
-const upload = multer({
-    storage:Storage,
-    fileFilter:(req,file,cb)=>{
-        if(file.mimetype == 'image/png' || file.mimetype == 'image/jpg' || file.mimetype == 'image/jpeg'){
-            cb(null,true);
-        }else{
-            cb(null,false);
-            return cb(new Error('only .png,.jpg and .jpeg format allowed!'));
-        }
-    }
-});
+// const Storage = multer.diskStorage({
+//     destination:(req,file,cb)=>{
+//         cb(null,DIR);
+//     },
+//     filename:(req,file,cb)=>{
+//         const filename = file.originalname.toLowerCase().split(" ").join('-');
+//         cb(null, uuidv4() + '-' + filename)
+//     },
+// })
+
+// const upload = multer({
+//     storage:Storage,
+//     fileFilter:(req,file,cb)=>{
+//         if(file.mimetype == 'image/png' || file.mimetype == 'image/jpg' || file.mimetype == 'image/jpeg'){
+//             cb(null,true);
+//         }else{
+//             cb(null,false);
+//             return cb(new Error('only .png,.jpg and .jpeg format allowed!'));
+//         }
+//     }
+// });
 
 
 // Get all items
@@ -65,9 +72,33 @@ router.get("/vendor", auth, async (req, res) => {
     }
 });
 
+router.upload("/upload", (req,res)=>{
+    try{
+        const file = req.files.file;
+        if (file.size > 1024*1024){
+            removeTmp(file.tempFilePath)
+            return res.status(400).json({msg: "Size too large."})
+          }
+          if (file.mimetype !== "image/jpeg" && file.mimetype !== "image/png") {
+            removeTmp(file.tempFilePath)
+            return res.status(400).json({msg: "File format is incorrect."})
+          }
+
+          cloudinary.v2.uploader.upload(file.tempFilePath, {folder: "MERN-Ecommerce"}, async (err, result) => {
+            if (err) throw err;
+      
+            removeTmp(file.tempFilePath)
+            res.json({public_id: result.public_id, url: result.secure_url})
+          })
+
+    }catch(err){
+        return res.status(500).js
+    }
+})
+
 // Add an item to the database
-router.post("/add", auth,upload.single("image"), async (req, res) => {
-    const url = req.protocol+'://'+req.get('host')
+router.post("/add", auth, async (req, res) => {
+    
     try {
         // Verify that the vendor hasn't already added an item with the same name
         const item = await Item.findOne({
@@ -82,12 +113,12 @@ router.post("/add", auth,upload.single("image"), async (req, res) => {
         }
 
         // If an image file was uploaded, save it to the server
-        let image = "";
-        if (req.file) {
-            image = url + '/public/images/' + req.file.filename;
-        } else {
-            image = "default.jpg";
-        }
+        // let image = "";
+        // if (req.file) {
+        //     image = url + '/public/images/' + req.file.filename;
+        // } else {
+        //     image = "default.jpg";
+        // }
 
         // If any addons were provided
         let addons = [];
@@ -103,7 +134,7 @@ router.post("/add", auth,upload.single("image"), async (req, res) => {
         // Create a new item
         const new_item = new Item({
             name: req.body.name,
-            image: image,
+            image: req.image,
             vendor_id: req.user,
             price: req.body.price,
             category: req.body.category,
@@ -121,8 +152,7 @@ router.post("/add", auth,upload.single("image"), async (req, res) => {
     }
 });
 
-router.patch("/edit", auth,upload.single("image"), async (req, res) => {
-    const url = req.protocol+'://'+req.get('host')
+router.patch("/edit", async (req, res) => {
     try {
         const item = await Item.findOne({
             vendor_id: req.user,
@@ -152,9 +182,8 @@ router.patch("/edit", auth,upload.single("image"), async (req, res) => {
         item.tags = req.body.tags.split(",");
 
         // If an image file was uploaded, save it to the server
-        if (req.file) {
-            item.image = url + '/public/images/' + req.file.filename;
-        }
+            item.image = req.body.image;
+        
 
         // If any addons were provided
         if (req.body.addons !== "") {
