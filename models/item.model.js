@@ -8,6 +8,7 @@ const ItemSchema = new mongoose.Schema({
     },
     image: {
         type: String,
+        required:true,
     },
     vendor_id: {
         type: mongoose.Schema.Types.ObjectId,
