@@ -134,7 +134,7 @@ router.post("/add", auth, async (req, res) => {
         // Create a new item
         const new_item = new Item({
             name: req.body.name,
-            image: req.image,
+            image: req.body.image,
             vendor_id: req.user,
             price: req.body.price,
             category: req.body.category,
