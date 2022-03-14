@@ -72,7 +72,7 @@ router.get("/vendor", auth, async (req, res) => {
     }
 });
 
-router.upload("/upload", (req,res)=>{
+router.post("/upload", (req,res)=>{
     try{
         const file = req.files.file;
         if (file.size > 1024*1024){
