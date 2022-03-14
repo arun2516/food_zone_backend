@@ -11,11 +11,11 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
-cloudinary.config({
-    cloud_name: process.env.CLOUD_NAME,
-    api_key: process.env.CLOUD_API_KEY,
-    api_secret: process.env.CLOUD_API_SECRET
-  })
+// cloudinary.config({
+//     cloud_name: process.env.CLOUD_NAME,
+//     api_key: process.env.CLOUD_API_KEY,
+//     api_secret: process.env.CLOUD_API_SECRET
+//   })
 
 // // Set up multer
 // const multer = require("multer");
@@ -72,29 +72,29 @@ router.get("/vendor", auth, async (req, res) => {
     }
 });
 
-router.post("/upload", (req,res)=>{
-    try{
-        const file = req.files.file;
-        if (file.size > 1024*1024){
-            removeTmp(file.tempFilePath)
-            return res.status(400).json({msg: "Size too large."})
-          }
-          if (file.mimetype !== "image/jpeg" && file.mimetype !== "image/png") {
-            removeTmp(file.tempFilePath)
-            return res.status(400).json({msg: "File format is incorrect."})
-          }
+// router.post("/upload", (req,res)=>{
+//     try{
+//         const file = req.files.file;
+//         if (file.size > 1024*1024){
+//             removeTmp(file.tempFilePath)
+//             return res.status(400).json({msg: "Size too large."})
+//           }
+//           if (file.mimetype !== "image/jpeg" && file.mimetype !== "image/png") {
+//             removeTmp(file.tempFilePath)
+//             return res.status(400).json({msg: "File format is incorrect."})
+//           }
 
-          cloudinary.v2.uploader.upload(file.tempFilePath, {folder: "MERN-Ecommerce"}, async (err, result) => {
-            if (err) throw err;
+//           cloudinary.v2.uploader.upload(file.tempFilePath, {folder: "MERN-Ecommerce"}, async (err, result) => {
+//             if (err) throw err;
       
-            removeTmp(file.tempFilePath)
-            res.json({public_id: result.public_id, url: result.secure_url})
-          })
+//             removeTmp(file.tempFilePath)
+//             res.json({public_id: result.public_id, url: result.secure_url})
+//           })
 
-    }catch(err){
-        return res.status(500).js
-    }
-})
+//     }catch(err){
+//         return res.status(500).js
+//     }
+// })
 
 // Add an item to the database
 router.post("/add", auth, async (req, res) => {
