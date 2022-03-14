@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-
+const fileUpload = require('express-fileupload')
+const cookieParser = require('cookie-parser')
 require('dotenv').config();
 
 // Create express app
@@ -12,8 +13,12 @@ const port = process.env.PORT || 5000;
 const uri = process.env.MONGO_URI;
 
 // Set up middleware
-app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
+app.use(cors());
+app.use(fileUpload({
+    useTempFiles: true
+  }))
 app.use(express.urlencoded({ extended: true }))
 
 // Serve static assets
