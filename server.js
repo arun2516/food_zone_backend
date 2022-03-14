@@ -17,7 +17,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 
 // Serve static assets
-app.use('/public/images', express.static(__dirname + '/public/images/'));
 
 // Setup API endpoints
 app.use("/buyers", require("./routes/buyer.route"));
